@@ -43,16 +43,16 @@ h1 {
   color: var(--color-muted);
 }
 
-/* Lightweight inline error banner (distinct from Material form errors). */
-.alert {
-  padding: 0.75rem 1rem;
-  border-radius: 6px;
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
+/* Toast (MatSnackBar) colour variants. The snackbar renders in the CDK overlay,
+   so these must be global (component styles cannot reach it). */
+.toast--success {
+  --mdc-snackbar-container-color: #2e7d32;
+  --mdc-snackbar-supporting-text-color: #fff;
+  --mat-snack-bar-button-color: #fff;
 }
 
-.alert--error {
-  background: #fdeded;
-  color: var(--color-danger);
-  border: 1px solid #f5c2c0;
+.toast--error {
+  --mdc-snackbar-container-color: #c62828;
+  --mdc-snackbar-supporting-text-color: #fff;
+  --mat-snack-bar-button-color: #fff;
 }

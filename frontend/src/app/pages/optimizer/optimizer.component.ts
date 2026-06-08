@@ -10,6 +10,7 @@ import {
   RecipeSelection,
 } from '../../models/optimization.model';
 import { OptimizationService } from '../../services/optimization.service';
+import { NotificationService } from '../../shared/notification.service';
 import { DataTableComponent, TableColumn } from '../../shared/data-table/data-table.component';
 
 @Component({
@@ -26,11 +27,11 @@ import { DataTableComponent, TableColumn } from '../../shared/data-table/data-ta
 })
 export class OptimizerComponent implements OnInit, OnDestroy {
   private readonly service = inject(OptimizationService);
+  private readonly notifications = inject(NotificationService);
   private readonly destroy$ = new Subject<void>();
 
   protected readonly result = signal<OptimizationResult | null>(null);
   protected readonly loading = signal(false);
-  protected readonly error = signal<string | null>(null);
 
   protected readonly selectionColumns: TableColumn<RecipeSelection>[] = [
     { key: 'recipe', header: 'Recipe', cell: (row) => row.recipeName },
@@ -54,9 +55,8 @@ export class OptimizerComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  protected optimize(): void {
+  protected optimize(notifyOnSuccess = false): void {
     this.loading.set(true);
-    this.error.set(null);
 
     this.service
       .optimize()
@@ -65,9 +65,12 @@ export class OptimizerComponent implements OnInit, OnDestroy {
         next: (result) => {
           this.result.set(result);
           this.loading.set(false);
+          if (notifyOnSuccess) {
+            this.notifications.success(`Optimal plan calculated: feeds ${result.totalPeopleFed}.`);
+          }
         },
         error: () => {
-          this.error.set('Could not run the optimizer. Is the API running?');
+          this.notifications.error('Could not run the optimizer. Is the API running?');
           this.loading.set(false);
         },
       });

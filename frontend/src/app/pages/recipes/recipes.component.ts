@@ -7,6 +7,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { Recipe, RecipeRequest } from '../../models/recipe.model';
 import { RecipeService } from '../../services/recipe.service';
 import { IngredientService } from '../../services/ingredient.service';
+import { NotificationService } from '../../shared/notification.service';
 import { DataTableComponent, TableAction, TableColumn } from '../../shared/data-table/data-table.component';
 import { RecipeDialogComponent, RecipeDialogData } from './recipe-dialog/recipe-dialog.component';
 
@@ -20,11 +21,11 @@ export class RecipesComponent implements OnInit, OnDestroy {
   private readonly recipeService = inject(RecipeService);
   private readonly ingredientService = inject(IngredientService);
   private readonly dialog = inject(MatDialog);
+  private readonly notifications = inject(NotificationService);
   private readonly destroy$ = new Subject<void>();
 
   protected readonly recipes = signal<Recipe[]>([]);
   protected readonly ingredientNames = signal<string[]>([]);
-  protected readonly error = signal<string | null>(null);
 
   protected readonly columns: TableColumn<Recipe>[] = [
     { key: 'name', header: 'Name', cell: (row) => row.name },
@@ -53,7 +54,7 @@ export class RecipesComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (items) => this.recipes.set([...items].sort((a, b) => a.name.localeCompare(b.name))),
-        error: () => this.error.set('Could not load recipes. Is the API running?'),
+        error: () => this.notifications.error('Could not load recipes. Is the API running?'),
       });
   }
 
@@ -89,8 +90,11 @@ export class RecipesComponent implements OnInit, OnDestroy {
           : this.recipeService.create(request);
 
         operation.pipe(takeUntil(this.destroy$)).subscribe({
-          next: () => this.loadRecipes(),
-          error: () => this.error.set('Could not save the recipe.'),
+          next: () => {
+            this.notifications.success(recipe ? 'Recipe updated.' : 'Recipe added.');
+            this.loadRecipes();
+          },
+          error: () => this.notifications.error('Could not save the recipe.'),
         });
       });
   }
@@ -104,8 +108,11 @@ export class RecipesComponent implements OnInit, OnDestroy {
       .delete(recipe.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: () => this.loadRecipes(),
-        error: () => this.error.set('Could not delete the recipe.'),
+        next: () => {
+          this.notifications.success('Recipe deleted.');
+          this.loadRecipes();
+        },
+        error: () => this.notifications.error('Could not delete the recipe.'),
       });
   }
 

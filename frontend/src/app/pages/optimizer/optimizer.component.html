@@ -3,7 +3,7 @@
     <h1>Optimizer</h1>
     <p>The combination of recipes that feeds the most people with the ingredients in stock.</p>
   </div>
-  <button mat-flat-button color="primary" (click)="optimize()" [disabled]="loading()">
+  <button mat-flat-button color="primary" (click)="optimize(true)" [disabled]="loading()">
     <mat-icon>calculate</mat-icon>
     Recalculate
   </button>
@@ -11,10 +11,6 @@
 
 @if (loading()) {
   <mat-progress-bar mode="indeterminate" />
-}
-
-@if (error()) {
-  <div class="alert alert--error">{{ error() }}</div>
 }
 
 @if (result(); as plan) {

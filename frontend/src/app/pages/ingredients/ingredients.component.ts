@@ -6,6 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { Ingredient, IngredientRequest } from '../../models/ingredient.model';
 import { IngredientService } from '../../services/ingredient.service';
+import { NotificationService } from '../../shared/notification.service';
 import { DataTableComponent, TableAction, TableColumn } from '../../shared/data-table/data-table.component';
 import {
   IngredientDialogComponent,
@@ -21,10 +22,10 @@ import {
 export class IngredientsComponent implements OnInit, OnDestroy {
   private readonly service = inject(IngredientService);
   private readonly dialog = inject(MatDialog);
+  private readonly notifications = inject(NotificationService);
   private readonly destroy$ = new Subject<void>();
 
   protected readonly ingredients = signal<Ingredient[]>([]);
-  protected readonly error = signal<string | null>(null);
 
   protected readonly columns: TableColumn<Ingredient>[] = [
     { key: 'name', header: 'Name', cell: (row) => row.name },
@@ -52,7 +53,7 @@ export class IngredientsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (items) =>
           this.ingredients.set([...items].sort((a, b) => a.name.localeCompare(b.name))),
-        error: () => this.error.set('Could not load ingredients. Is the API running?'),
+        error: () => this.notifications.error('Could not load ingredients. Is the API running?'),
       });
   }
 
@@ -76,8 +77,11 @@ export class IngredientsComponent implements OnInit, OnDestroy {
           : this.service.create(request);
 
         operation.pipe(takeUntil(this.destroy$)).subscribe({
-          next: () => this.load(),
-          error: () => this.error.set('Could not save the ingredient.'),
+          next: () => {
+            this.notifications.success(ingredient ? 'Ingredient updated.' : 'Ingredient added.');
+            this.load();
+          },
+          error: () => this.notifications.error('Could not save the ingredient.'),
         });
       });
   }
@@ -91,8 +95,11 @@ export class IngredientsComponent implements OnInit, OnDestroy {
       .delete(ingredient.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: () => this.load(),
-        error: () => this.error.set('Could not delete the ingredient.'),
+        next: () => {
+          this.notifications.success('Ingredient deleted.');
+          this.load();
+        },
+        error: () => this.notifications.error('Could not delete the ingredient.'),
       });
   }
 }
