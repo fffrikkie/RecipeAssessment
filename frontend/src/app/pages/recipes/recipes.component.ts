@@ -1,51 +1,41 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import {
-  FormArray,
-  FormControl,
-  FormGroup,
-  FormBuilder,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
-import { Ingredient } from '../../models/ingredient.model';
-import { Recipe } from '../../models/recipe.model';
-import { IngredientService } from '../../services/ingredient.service';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatCardModule } from '@angular/material/card';
+import { MatDialog } from '@angular/material/dialog';
+import { Recipe, RecipeRequest } from '../../models/recipe.model';
 import { RecipeService } from '../../services/recipe.service';
-
-type LineGroup = FormGroup<{
-  ingredientName: FormControl<string>;
-  quantity: FormControl<number>;
-}>;
+import { IngredientService } from '../../services/ingredient.service';
+import { DataTableComponent, TableAction, TableColumn } from '../../shared/data-table/data-table.component';
+import { RecipeDialogComponent, RecipeDialogData } from './recipe-dialog/recipe-dialog.component';
 
 @Component({
   selector: 'app-recipes',
-  imports: [ReactiveFormsModule],
+  imports: [MatButtonModule, MatIconModule, MatCardModule, DataTableComponent],
   templateUrl: './recipes.component.html',
   styleUrl: './recipes.component.scss',
 })
 export class RecipesComponent implements OnInit {
   private readonly recipeService = inject(RecipeService);
   private readonly ingredientService = inject(IngredientService);
-  private readonly fb = inject(FormBuilder);
+  private readonly dialog = inject(MatDialog);
 
   protected readonly recipes = signal<Recipe[]>([]);
   protected readonly ingredientNames = signal<string[]>([]);
-  protected readonly editingId = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);
-  protected readonly isEditing = computed(() => this.editingId() !== null);
 
-  protected readonly form = this.fb.nonNullable.group({
-    name: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(100)]),
-    feeds: this.fb.nonNullable.control(1, [Validators.required, Validators.min(1)]),
-    ingredients: this.fb.nonNullable.array<LineGroup>([]),
-  });
+  protected readonly columns: TableColumn<Recipe>[] = [
+    { key: 'name', header: 'Name', cell: (row) => row.name },
+    { key: 'ingredients', header: 'Ingredients', cell: (row) => this.describeIngredients(row) },
+    { key: 'feeds', header: 'Feeds', numeric: true, cell: (row) => row.feeds },
+  ];
 
-  protected get lines(): FormArray<LineGroup> {
-    return this.form.controls.ingredients;
-  }
+  protected readonly actions: TableAction<Recipe>[] = [
+    { icon: 'edit', label: 'Edit', color: 'primary', handler: (row) => this.openDialog(row) },
+    { icon: 'delete', label: 'Delete', color: 'warn', handler: (row) => this.remove(row) },
+  ];
 
   ngOnInit(): void {
-    this.addLine();
     this.loadRecipes();
     this.loadIngredientNames();
   }
@@ -59,67 +49,34 @@ export class RecipesComponent implements OnInit {
 
   private loadIngredientNames(): void {
     this.ingredientService.getAll().subscribe({
-      next: (items: Ingredient[]) =>
+      next: (items) =>
         this.ingredientNames.set(items.map((i) => i.name).sort((a, b) => a.localeCompare(b))),
       error: () => {
-        /* the datalist is a convenience only; ignore failures */
+        /* the autocomplete suggestions are a convenience only; ignore failures */
       },
     });
   }
 
-  private createLine(ingredientName = '', quantity = 1): LineGroup {
-    return this.fb.nonNullable.group({
-      ingredientName: this.fb.nonNullable.control(ingredientName, [
-        Validators.required,
-        Validators.maxLength(100),
-      ]),
-      quantity: this.fb.nonNullable.control(quantity, [Validators.required, Validators.min(1)]),
+  protected openDialog(recipe?: Recipe): void {
+    const dialogRef = this.dialog.open<RecipeDialogComponent, RecipeDialogData, RecipeRequest>(
+      RecipeDialogComponent,
+      { data: { recipe, ingredientNames: this.ingredientNames() } },
+    );
+
+    dialogRef.afterClosed().subscribe((request) => {
+      if (!request) {
+        return;
+      }
+
+      const operation = recipe
+        ? this.recipeService.update(recipe.id, request)
+        : this.recipeService.create(request);
+
+      operation.subscribe({
+        next: () => this.loadRecipes(),
+        error: () => this.error.set('Could not save the recipe.'),
+      });
     });
-  }
-
-  protected addLine(): void {
-    this.lines.push(this.createLine());
-  }
-
-  protected removeLine(index: number): void {
-    this.lines.removeAt(index);
-    if (this.lines.length === 0) {
-      this.addLine();
-    }
-  }
-
-  protected submit(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-
-    this.error.set(null);
-    const request = this.form.getRawValue();
-    const editingId = this.editingId();
-
-    const operation = editingId
-      ? this.recipeService.update(editingId, request)
-      : this.recipeService.create(request);
-
-    operation.subscribe({
-      next: () => {
-        this.resetForm();
-        this.loadRecipes();
-      },
-      error: () => this.error.set('Could not save the recipe.'),
-    });
-  }
-
-  protected edit(recipe: Recipe): void {
-    this.editingId.set(recipe.id);
-    this.lines.clear();
-    recipe.ingredients.forEach((i) => this.lines.push(this.createLine(i.ingredientName, i.quantity)));
-    if (this.lines.length === 0) {
-      this.addLine();
-    }
-    this.form.controls.name.setValue(recipe.name);
-    this.form.controls.feeds.setValue(recipe.feeds);
   }
 
   protected remove(recipe: Recipe): void {
@@ -128,25 +85,12 @@ export class RecipesComponent implements OnInit {
     }
 
     this.recipeService.delete(recipe.id).subscribe({
-      next: () => {
-        if (this.editingId() === recipe.id) {
-          this.resetForm();
-        }
-        this.loadRecipes();
-      },
+      next: () => this.loadRecipes(),
       error: () => this.error.set('Could not delete the recipe.'),
     });
   }
 
-  protected resetForm(): void {
-    this.editingId.set(null);
-    this.form.controls.name.reset('');
-    this.form.controls.feeds.reset(1);
-    this.lines.clear();
-    this.addLine();
-  }
-
-  protected describeIngredients(recipe: Recipe): string {
+  private describeIngredients(recipe: Recipe): string {
     return recipe.ingredients.map((i) => `${i.quantity}x ${i.ingredientName}`).join(', ');
   }
 }

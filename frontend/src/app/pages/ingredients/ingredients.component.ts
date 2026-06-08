@@ -1,26 +1,38 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Ingredient } from '../../models/ingredient.model';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatCardModule } from '@angular/material/card';
+import { MatDialog } from '@angular/material/dialog';
+import { Ingredient, IngredientRequest } from '../../models/ingredient.model';
 import { IngredientService } from '../../services/ingredient.service';
+import { DataTableComponent, TableAction, TableColumn } from '../../shared/data-table/data-table.component';
+import {
+  IngredientDialogComponent,
+  IngredientDialogData,
+} from './ingredient-dialog/ingredient-dialog.component';
 
 @Component({
   selector: 'app-ingredients',
-  imports: [ReactiveFormsModule],
+  imports: [MatButtonModule, MatIconModule, MatCardModule, DataTableComponent],
   templateUrl: './ingredients.component.html',
   styleUrl: './ingredients.component.scss',
 })
 export class IngredientsComponent implements OnInit {
   private readonly service = inject(IngredientService);
-  private readonly fb = inject(FormBuilder);
+  private readonly dialog = inject(MatDialog);
 
   protected readonly ingredients = signal<Ingredient[]>([]);
-  protected readonly editingId = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);
 
-  protected readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.maxLength(100)]],
-    availableAmount: [0, [Validators.required, Validators.min(0)]],
-  });
+  protected readonly columns: TableColumn<Ingredient>[] = [
+    { key: 'name', header: 'Name', cell: (row) => row.name },
+    { key: 'available', header: 'Available', numeric: true, cell: (row) => row.availableAmount },
+  ];
+
+  protected readonly actions: TableAction<Ingredient>[] = [
+    { icon: 'edit', label: 'Edit', color: 'primary', handler: (row) => this.openDialog(row) },
+    { icon: 'delete', label: 'Delete', color: 'warn', handler: (row) => this.remove(row) },
+  ];
 
   ngOnInit(): void {
     this.load();
@@ -28,37 +40,33 @@ export class IngredientsComponent implements OnInit {
 
   private load(): void {
     this.service.getAll().subscribe({
-      next: (items) => this.ingredients.set([...items].sort((a, b) => a.name.localeCompare(b.name))),
+      next: (items) =>
+        this.ingredients.set([...items].sort((a, b) => a.name.localeCompare(b.name))),
       error: () => this.error.set('Could not load ingredients. Is the API running?'),
     });
   }
 
-  protected submit(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
+  protected openDialog(ingredient?: Ingredient): void {
+    const dialogRef = this.dialog.open<
+      IngredientDialogComponent,
+      IngredientDialogData,
+      IngredientRequest
+    >(IngredientDialogComponent, { data: { ingredient } });
 
-    this.error.set(null);
-    const request = this.form.getRawValue();
-    const editingId = this.editingId();
+    dialogRef.afterClosed().subscribe((request) => {
+      if (!request) {
+        return;
+      }
 
-    const operation = editingId
-      ? this.service.update(editingId, request)
-      : this.service.create(request);
+      const operation = ingredient
+        ? this.service.update(ingredient.id, request)
+        : this.service.create(request);
 
-    operation.subscribe({
-      next: () => {
-        this.resetForm();
-        this.load();
-      },
-      error: () => this.error.set('Could not save the ingredient.'),
+      operation.subscribe({
+        next: () => this.load(),
+        error: () => this.error.set('Could not save the ingredient.'),
+      });
     });
-  }
-
-  protected edit(ingredient: Ingredient): void {
-    this.editingId.set(ingredient.id);
-    this.form.setValue({ name: ingredient.name, availableAmount: ingredient.availableAmount });
   }
 
   protected remove(ingredient: Ingredient): void {
@@ -67,18 +75,8 @@ export class IngredientsComponent implements OnInit {
     }
 
     this.service.delete(ingredient.id).subscribe({
-      next: () => {
-        if (this.editingId() === ingredient.id) {
-          this.resetForm();
-        }
-        this.load();
-      },
+      next: () => this.load(),
       error: () => this.error.set('Could not delete the ingredient.'),
     });
-  }
-
-  protected resetForm(): void {
-    this.editingId.set(null);
-    this.form.reset({ name: '', availableAmount: 0 });
   }
 }

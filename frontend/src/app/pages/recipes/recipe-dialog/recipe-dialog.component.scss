@@ -1,0 +1,52 @@
+mat-dialog-content {
+  min-width: min(560px, 80vw);
+}
+
+.top-fields {
+  display: flex;
+  gap: 1rem;
+  padding-top: 0.5rem;
+
+  &__name {
+    flex: 2 1 auto;
+  }
+
+  &__feeds {
+    flex: 0 0 110px;
+  }
+}
+
+.lines-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-muted, #64748b);
+  margin: 0.25rem 0 0.5rem;
+}
+
+.lines {
+  display: flex;
+  flex-direction: column;
+}
+
+.line {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+
+  &__name {
+    flex: 1 1 auto;
+  }
+
+  &__qty {
+    flex: 0 0 90px;
+  }
+
+  button {
+    margin-top: 0.35rem;
+  }
+}
+
+.add-line {
+  margin-top: 0.25rem;
+}

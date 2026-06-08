@@ -2,30 +2,10 @@
   display: block;
 }
 
-.lines-title {
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--color-muted);
-  margin: 1.25rem 0 0.5rem;
-}
-
-.lines {
+.page-header {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.line {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-
-  &__name {
-    flex: 1 1 auto;
-  }
-
-  &__qty {
-    width: 90px;
-  }
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
 }

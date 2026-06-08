@@ -9,7 +9,7 @@ It is split into two parts:
 | Part | Tech | Responsibility |
 | --- | --- | --- |
 | `backend/` | ASP.NET Core 10 Web API (C#) | Stores recipes & ingredients and runs the optimisation calculation |
-| `frontend/` | Angular 19 | UI to add / edit / delete recipes and ingredients, and view the optimal plan |
+| `frontend/` | Angular 19 + Angular Material | UI to add / edit / delete recipes and ingredients, and view the optimal plan |
 
 ---
 
@@ -60,9 +60,11 @@ Open **http://localhost:4200**. The dev server origin is whitelisted in the API'
 
 - **Optimizer** – runs the calculation and shows total people fed, which recipes to make
   (and how many times), and how much of each ingredient is used / left over.
-- **Recipes** – add, edit, delete recipes. Each recipe has a name, a "feeds" count and a
-  dynamic list of ingredient lines (`quantity` × `ingredient name`).
-- **Ingredients** – add, edit, delete pantry ingredients and their available amounts.
+- **Recipes** – add, edit, delete recipes. *Add* and *Edit* open a **Material dialog** with a
+  name, a "feeds" count and a dynamic list of ingredient lines (`quantity` × `ingredient name`,
+  with autocomplete suggestions from the pantry).
+- **Ingredients** – add, edit, delete pantry ingredients and their available amounts. *Add* and
+  *Edit* open a **Material dialog**.
 
 Changing recipes or ingredients and returning to the **Optimizer** (or pressing
 *Recalculate*) reflects the new optimal plan immediately.
@@ -115,7 +117,9 @@ frontend/
   src/app/
     models/                              TypeScript interfaces
     services/                            typed HttpClient wrappers
+    shared/data-table/                   reusable, config-driven Material table component
     pages/                               optimizer, recipes, ingredients (standalone components)
+      */*-dialog/                        MatDialog add/edit forms for recipes & ingredients
     app.routes.ts / app.config.ts        lazy routes + providers
 ```
 
@@ -134,6 +138,10 @@ frontend/
 - **Frontend** – Angular 19 standalone components, `inject()`, **signals** for state, typed
   **reactive forms** (with a `FormArray` for recipe ingredient lines), lazy-loaded routes, and
   the new `@if` / `@for` control-flow syntax.
+- **Angular Material** – the UI is built with Material components (toolbar, cards, buttons,
+  inputs, autocomplete, table). Add/Edit for both recipes and ingredients open in a `MatDialog`
+  popup. A single generic, reusable `DataTableComponent` (driven by a column definition + row
+  actions) renders every table in the app, so no `mat-table` boilerplate is duplicated.
 
 > **Storage is in-memory** — data resets when the API process restarts (by design for this
 > assessment; the repository abstraction keeps it swappable). Authentication/authorization is

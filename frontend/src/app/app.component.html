@@ -1,13 +1,15 @@
-<header class="app-header">
-  <div class="app-header__inner">
-    <a class="app-brand" routerLink="/optimizer">🍽️ Recipe Optimizer</a>
-    <nav class="app-nav">
-      <a routerLink="/optimizer" routerLinkActive="active">Optimizer</a>
-      <a routerLink="/recipes" routerLinkActive="active">Recipes</a>
-      <a routerLink="/ingredients" routerLinkActive="active">Ingredients</a>
-    </nav>
-  </div>
-</header>
+<mat-toolbar color="primary" class="app-toolbar">
+  <a class="app-brand" routerLink="/optimizer">
+    <mat-icon>restaurant</mat-icon>
+    <span>Recipe Optimizer</span>
+  </a>
+
+  <nav class="app-nav">
+    <a mat-button routerLink="/optimizer" routerLinkActive="active">Optimizer</a>
+    <a mat-button routerLink="/recipes" routerLinkActive="active">Recipes</a>
+    <a mat-button routerLink="/ingredients" routerLinkActive="active">Ingredients</a>
+  </nav>
+</mat-toolbar>
 
 <main class="app-main">
   <router-outlet />

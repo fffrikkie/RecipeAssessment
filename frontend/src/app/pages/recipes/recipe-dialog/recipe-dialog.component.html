@@ -1,0 +1,72 @@
+<h2 mat-dialog-title>{{ isEditing ? 'Edit recipe' : 'Add recipe' }}</h2>
+
+<form [formGroup]="form" (ngSubmit)="save()">
+  <mat-dialog-content>
+    <div class="top-fields">
+      <mat-form-field appearance="outline" class="top-fields__name">
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name" placeholder="e.g. Burger" cdkFocusInitial />
+        @if (form.controls.name.hasError('required')) {
+          <mat-error>A name is required.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="top-fields__feeds">
+        <mat-label>Feeds</mat-label>
+        <input matInput type="number" min="1" formControlName="feeds" />
+        @if (form.controls.feeds.invalid) {
+          <mat-error>At least 1.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <h3 class="lines-title">Ingredients</h3>
+
+    <div formArrayName="ingredients" class="lines">
+      @for (line of lines.controls; track $index; let i = $index) {
+        <div class="line" [formGroupName]="i">
+          <mat-form-field appearance="outline" class="line__name">
+            <mat-label>Ingredient</mat-label>
+            <input matInput formControlName="ingredientName" [matAutocomplete]="auto" />
+            <mat-autocomplete #auto="matAutocomplete">
+              @for (name of ingredientNames; track name) {
+                <mat-option [value]="name">{{ name }}</mat-option>
+              }
+            </mat-autocomplete>
+            @if (line.controls.ingredientName.hasError('required')) {
+              <mat-error>Required.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="line__qty">
+            <mat-label>Qty</mat-label>
+            <input matInput type="number" min="1" formControlName="quantity" />
+          </mat-form-field>
+
+          <button
+            mat-icon-button
+            type="button"
+            color="warn"
+            aria-label="Remove ingredient"
+            matTooltip="Remove"
+            (click)="removeLine(i)"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      }
+    </div>
+
+    <button mat-stroked-button type="button" class="add-line" (click)="addLine()">
+      <mat-icon>add</mat-icon>
+      Add ingredient
+    </button>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancel</button>
+    <button mat-flat-button color="primary" type="submit">
+      {{ isEditing ? 'Save changes' : 'Add' }}
+    </button>
+  </mat-dialog-actions>
+</form>
