@@ -1,0 +1,71 @@
+<div class="page-header">
+  <h1>Ingredients</h1>
+  <p>Manage the pantry: the ingredients available and how much of each is in stock.</p>
+</div>
+
+@if (error()) {
+  <div class="alert alert--error">{{ error() }}</div>
+}
+
+<div class="card">
+  <h2 class="card__title">{{ editingId() ? 'Edit ingredient' : 'Add ingredient' }}</h2>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid">
+    <div class="field">
+      <label for="name">Name</label>
+      <input id="name" type="text" formControlName="name" placeholder="e.g. Tomato" />
+      @if (form.controls.name.touched && form.controls.name.invalid) {
+        <span class="field-error">A name is required.</span>
+      }
+    </div>
+
+    <div class="field">
+      <label for="amount">Available amount</label>
+      <input id="amount" type="number" min="0" formControlName="availableAmount" />
+      @if (form.controls.availableAmount.touched && form.controls.availableAmount.invalid) {
+        <span class="field-error">Must be 0 or more.</span>
+      }
+    </div>
+
+    <div class="btn-row">
+      <button type="submit" class="btn btn--primary">
+        {{ editingId() ? 'Save changes' : 'Add ingredient' }}
+      </button>
+      @if (editingId()) {
+        <button type="button" class="btn" (click)="resetForm()">Cancel</button>
+      }
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2 class="card__title">In stock ({{ ingredients().length }})</h2>
+
+  @if (ingredients().length === 0) {
+    <div class="empty-state">No ingredients yet. Add one above.</div>
+  } @else {
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th class="numeric">Available</th>
+          <th style="width: 1%"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (ingredient of ingredients(); track ingredient.id) {
+          <tr>
+            <td>{{ ingredient.name }}</td>
+            <td class="numeric">{{ ingredient.availableAmount }}</td>
+            <td>
+              <div class="btn-row">
+                <button class="btn btn--link btn--sm" (click)="edit(ingredient)">Edit</button>
+                <button class="btn btn--danger btn--sm" (click)="remove(ingredient)">Delete</button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

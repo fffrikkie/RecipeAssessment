@@ -1,0 +1,83 @@
+<div class="page-header">
+  <h1>Optimizer</h1>
+  <p>Calculates the combination of recipes that feeds the most people with the ingredients in stock.</p>
+</div>
+
+@if (error()) {
+  <div class="alert alert--error">{{ error() }}</div>
+}
+
+<div class="btn-row" style="margin-bottom: 1.5rem">
+  <button class="btn btn--primary" (click)="optimize()" [disabled]="loading()">
+    {{ loading() ? 'Calculating…' : 'Recalculate optimal plan' }}
+  </button>
+</div>
+
+@if (result(); as plan) {
+  <div class="card result-hero">
+    <span class="result-hero__label">People fed</span>
+    <span class="result-hero__value">{{ plan.totalPeopleFed }}</span>
+  </div>
+
+  <div class="card">
+    <h2 class="card__title">Recipes to make</h2>
+    @if (plan.selections.length === 0) {
+      <div class="empty-state">
+        No recipes can be made with the current ingredients.
+      </div>
+    } @else {
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Recipe</th>
+            <th class="numeric">Times made</th>
+            <th class="numeric">People fed</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (selection of plan.selections; track selection.recipeId) {
+            <tr>
+              <td>{{ selection.recipeName }}</td>
+              <td class="numeric">{{ selection.timesMade }}</td>
+              <td class="numeric">{{ selection.peopleFed }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+  <div class="card">
+    <h2 class="card__title">Ingredient usage</h2>
+    @if (plan.ingredientUsages.length === 0) {
+      <div class="empty-state">No ingredients in stock.</div>
+    } @else {
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Ingredient</th>
+            <th class="numeric">Available</th>
+            <th class="numeric">Used</th>
+            <th class="numeric">Remaining</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (usage of plan.ingredientUsages; track usage.ingredientName) {
+            <tr>
+              <td>{{ usage.ingredientName }}</td>
+              <td class="numeric">{{ usage.availableAmount }}</td>
+              <td class="numeric">
+                <span class="badge" [class.badge--zero]="usage.usedAmount === 0">
+                  {{ usage.usedAmount }}
+                </span>
+              </td>
+              <td class="numeric">{{ usage.remainingAmount }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+} @else if (!loading() && !error()) {
+  <div class="empty-state">No result yet.</div>
+}
