@@ -12,7 +12,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Recipe, RecipeRequest } from '../../../models/recipe.model';
 import { FormDialogComponent } from '../../../shared/form-dialog/form-dialog.component';
@@ -35,7 +35,7 @@ type LineGroup = FormGroup<{
     MatInputModule,
     MatButtonModule,
     MatIconModule,
-    MatAutocompleteModule,
+    MatSelectModule,
     MatTooltipModule,
     FormDialogComponent,
   ],
@@ -49,7 +49,18 @@ export class RecipeDialogComponent {
   private readonly data = inject<RecipeDialogData>(MAT_DIALOG_DATA);
 
   protected readonly isEditing = !!this.data?.recipe;
-  protected readonly ingredientNames = this.data?.ingredientNames ?? [];
+
+  /**
+   * Options for the ingredient dropdowns: the pantry ingredients, plus any ingredient already
+   * referenced by the recipe being edited (so existing values — e.g. a recipe that uses an
+   * ingredient no longer in stock — remain selectable rather than appearing blank).
+   */
+  protected readonly ingredientOptions = [
+    ...new Set([
+      ...(this.data?.ingredientNames ?? []),
+      ...(this.data?.recipe?.ingredients.map((line) => line.ingredientName) ?? []),
+    ]),
+  ].sort((a, b) => a.localeCompare(b));
 
   protected readonly form = this.fb.nonNullable.group({
     name: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(100)]),

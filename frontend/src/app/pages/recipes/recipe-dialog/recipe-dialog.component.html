@@ -28,12 +28,11 @@
         <div class="line" [formGroupName]="i">
           <mat-form-field appearance="outline" class="line__name">
             <mat-label>Ingredient</mat-label>
-            <input matInput formControlName="ingredientName" [matAutocomplete]="auto" />
-            <mat-autocomplete #auto="matAutocomplete">
-              @for (name of ingredientNames; track name) {
+            <mat-select formControlName="ingredientName">
+              @for (name of ingredientOptions; track name) {
                 <mat-option [value]="name">{{ name }}</mat-option>
               }
-            </mat-autocomplete>
+            </mat-select>
             @if (line.controls.ingredientName.hasError('required')) {
               <mat-error>Required.</mat-error>
             }

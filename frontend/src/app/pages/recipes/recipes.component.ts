@@ -8,6 +8,10 @@ import { Recipe, RecipeRequest } from '../../models/recipe.model';
 import { RecipeService } from '../../services/recipe.service';
 import { IngredientService } from '../../services/ingredient.service';
 import { NotificationService } from '../../shared/notification.service';
+import {
+  ConfirmDialogComponent,
+  ConfirmDialogData,
+} from '../../shared/confirm-dialog/confirm-dialog.component';
 import { DataTableComponent, TableAction, TableColumn } from '../../shared/data-table/data-table.component';
 import { RecipeDialogComponent, RecipeDialogData } from './recipe-dialog/recipe-dialog.component';
 
@@ -100,19 +104,34 @@ export class RecipesComponent implements OnInit, OnDestroy {
   }
 
   protected remove(recipe: Recipe): void {
-    if (!confirm(`Delete "${recipe.name}"?`)) {
-      return;
-    }
-
-    this.recipeService
-      .delete(recipe.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.notifications.success('Recipe deleted.');
-          this.loadRecipes();
+    this.dialog
+      .open<ConfirmDialogComponent, ConfirmDialogData, boolean>(ConfirmDialogComponent, {
+        data: {
+          title: 'Delete recipe',
+          message: `Delete "${recipe.name}"? This cannot be undone.`,
+          confirmLabel: 'Delete',
+          confirmColor: 'warn',
         },
-        error: () => this.notifications.error('Could not delete the recipe.'),
+        width: '400px',
+        maxWidth: '90vw',
+      })
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((confirmed) => {
+        if (!confirmed) {
+          return;
+        }
+
+        this.recipeService
+          .delete(recipe.id)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.notifications.success('Recipe deleted.');
+              this.loadRecipes();
+            },
+            error: () => this.notifications.error('Could not delete the recipe.'),
+          });
       });
   }
 

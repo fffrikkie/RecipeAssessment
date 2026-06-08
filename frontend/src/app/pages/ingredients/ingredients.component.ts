@@ -7,6 +7,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { Ingredient, IngredientRequest } from '../../models/ingredient.model';
 import { IngredientService } from '../../services/ingredient.service';
 import { NotificationService } from '../../shared/notification.service';
+import {
+  ConfirmDialogComponent,
+  ConfirmDialogData,
+} from '../../shared/confirm-dialog/confirm-dialog.component';
 import { DataTableComponent, TableAction, TableColumn } from '../../shared/data-table/data-table.component';
 import {
   IngredientDialogComponent,
@@ -87,19 +91,34 @@ export class IngredientsComponent implements OnInit, OnDestroy {
   }
 
   protected remove(ingredient: Ingredient): void {
-    if (!confirm(`Delete "${ingredient.name}"?`)) {
-      return;
-    }
-
-    this.service
-      .delete(ingredient.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.notifications.success('Ingredient deleted.');
-          this.load();
+    this.dialog
+      .open<ConfirmDialogComponent, ConfirmDialogData, boolean>(ConfirmDialogComponent, {
+        data: {
+          title: 'Delete ingredient',
+          message: `Delete "${ingredient.name}"? This cannot be undone.`,
+          confirmLabel: 'Delete',
+          confirmColor: 'warn',
         },
-        error: () => this.notifications.error('Could not delete the ingredient.'),
+        width: '400px',
+        maxWidth: '90vw',
+      })
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((confirmed) => {
+        if (!confirmed) {
+          return;
+        }
+
+        this.service
+          .delete(ingredient.id)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.notifications.success('Ingredient deleted.');
+              this.load();
+            },
+            error: () => this.notifications.error('Could not delete the ingredient.'),
+          });
       });
   }
 }
