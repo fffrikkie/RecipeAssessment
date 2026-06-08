@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Subject, takeUntil } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
@@ -17,9 +18,10 @@ import {
   templateUrl: './ingredients.component.html',
   styleUrl: './ingredients.component.scss',
 })
-export class IngredientsComponent implements OnInit {
+export class IngredientsComponent implements OnInit, OnDestroy {
   private readonly service = inject(IngredientService);
   private readonly dialog = inject(MatDialog);
+  private readonly destroy$ = new Subject<void>();
 
   protected readonly ingredients = signal<Ingredient[]>([]);
   protected readonly error = signal<string | null>(null);
@@ -38,12 +40,20 @@ export class IngredientsComponent implements OnInit {
     this.load();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   private load(): void {
-    this.service.getAll().subscribe({
-      next: (items) =>
-        this.ingredients.set([...items].sort((a, b) => a.name.localeCompare(b.name))),
-      error: () => this.error.set('Could not load ingredients. Is the API running?'),
-    });
+    this.service
+      .getAll()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (items) =>
+          this.ingredients.set([...items].sort((a, b) => a.name.localeCompare(b.name))),
+        error: () => this.error.set('Could not load ingredients. Is the API running?'),
+      });
   }
 
   protected openDialog(ingredient?: Ingredient): void {
@@ -53,20 +63,23 @@ export class IngredientsComponent implements OnInit {
       IngredientRequest
     >(IngredientDialogComponent, { data: { ingredient }, width: '420px', maxWidth: '90vw' });
 
-    dialogRef.afterClosed().subscribe((request) => {
-      if (!request) {
-        return;
-      }
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((request) => {
+        if (!request) {
+          return;
+        }
 
-      const operation = ingredient
-        ? this.service.update(ingredient.id, request)
-        : this.service.create(request);
+        const operation = ingredient
+          ? this.service.update(ingredient.id, request)
+          : this.service.create(request);
 
-      operation.subscribe({
-        next: () => this.load(),
-        error: () => this.error.set('Could not save the ingredient.'),
+        operation.pipe(takeUntil(this.destroy$)).subscribe({
+          next: () => this.load(),
+          error: () => this.error.set('Could not save the ingredient.'),
+        });
       });
-    });
   }
 
   protected remove(ingredient: Ingredient): void {
@@ -74,9 +87,12 @@ export class IngredientsComponent implements OnInit {
       return;
     }
 
-    this.service.delete(ingredient.id).subscribe({
-      next: () => this.load(),
-      error: () => this.error.set('Could not delete the ingredient.'),
-    });
+    this.service
+      .delete(ingredient.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => this.load(),
+        error: () => this.error.set('Could not delete the ingredient.'),
+      });
   }
 }

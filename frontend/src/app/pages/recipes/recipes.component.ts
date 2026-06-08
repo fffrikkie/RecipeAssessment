@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Subject, takeUntil } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
@@ -15,10 +16,11 @@ import { RecipeDialogComponent, RecipeDialogData } from './recipe-dialog/recipe-
   templateUrl: './recipes.component.html',
   styleUrl: './recipes.component.scss',
 })
-export class RecipesComponent implements OnInit {
+export class RecipesComponent implements OnInit, OnDestroy {
   private readonly recipeService = inject(RecipeService);
   private readonly ingredientService = inject(IngredientService);
   private readonly dialog = inject(MatDialog);
+  private readonly destroy$ = new Subject<void>();
 
   protected readonly recipes = signal<Recipe[]>([]);
   protected readonly ingredientNames = signal<string[]>([]);
@@ -40,21 +42,32 @@ export class RecipesComponent implements OnInit {
     this.loadIngredientNames();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   private loadRecipes(): void {
-    this.recipeService.getAll().subscribe({
-      next: (items) => this.recipes.set([...items].sort((a, b) => a.name.localeCompare(b.name))),
-      error: () => this.error.set('Could not load recipes. Is the API running?'),
-    });
+    this.recipeService
+      .getAll()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (items) => this.recipes.set([...items].sort((a, b) => a.name.localeCompare(b.name))),
+        error: () => this.error.set('Could not load recipes. Is the API running?'),
+      });
   }
 
   private loadIngredientNames(): void {
-    this.ingredientService.getAll().subscribe({
-      next: (items) =>
-        this.ingredientNames.set(items.map((i) => i.name).sort((a, b) => a.localeCompare(b))),
-      error: () => {
-        /* the autocomplete suggestions are a convenience only; ignore failures */
-      },
-    });
+    this.ingredientService
+      .getAll()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (items) =>
+          this.ingredientNames.set(items.map((i) => i.name).sort((a, b) => a.localeCompare(b))),
+        error: () => {
+          /* the autocomplete suggestions are a convenience only; ignore failures */
+        },
+      });
   }
 
   protected openDialog(recipe?: Recipe): void {
@@ -63,20 +76,23 @@ export class RecipesComponent implements OnInit {
       { data: { recipe, ingredientNames: this.ingredientNames() }, width: '600px', maxWidth: '92vw' },
     );
 
-    dialogRef.afterClosed().subscribe((request) => {
-      if (!request) {
-        return;
-      }
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((request) => {
+        if (!request) {
+          return;
+        }
 
-      const operation = recipe
-        ? this.recipeService.update(recipe.id, request)
-        : this.recipeService.create(request);
+        const operation = recipe
+          ? this.recipeService.update(recipe.id, request)
+          : this.recipeService.create(request);
 
-      operation.subscribe({
-        next: () => this.loadRecipes(),
-        error: () => this.error.set('Could not save the recipe.'),
+        operation.pipe(takeUntil(this.destroy$)).subscribe({
+          next: () => this.loadRecipes(),
+          error: () => this.error.set('Could not save the recipe.'),
+        });
       });
-    });
   }
 
   protected remove(recipe: Recipe): void {
@@ -84,10 +100,13 @@ export class RecipesComponent implements OnInit {
       return;
     }
 
-    this.recipeService.delete(recipe.id).subscribe({
-      next: () => this.loadRecipes(),
-      error: () => this.error.set('Could not delete the recipe.'),
-    });
+    this.recipeService
+      .delete(recipe.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => this.loadRecipes(),
+        error: () => this.error.set('Could not delete the recipe.'),
+      });
   }
 
   private describeIngredients(recipe: Recipe): string {

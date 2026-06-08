@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Subject, takeUntil } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
@@ -23,8 +24,9 @@ import { DataTableComponent, TableColumn } from '../../shared/data-table/data-ta
   templateUrl: './optimizer.component.html',
   styleUrl: './optimizer.component.scss',
 })
-export class OptimizerComponent implements OnInit {
+export class OptimizerComponent implements OnInit, OnDestroy {
   private readonly service = inject(OptimizationService);
+  private readonly destroy$ = new Subject<void>();
 
   protected readonly result = signal<OptimizationResult | null>(null);
   protected readonly loading = signal(false);
@@ -47,19 +49,27 @@ export class OptimizerComponent implements OnInit {
     this.optimize();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   protected optimize(): void {
     this.loading.set(true);
     this.error.set(null);
 
-    this.service.optimize().subscribe({
-      next: (result) => {
-        this.result.set(result);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set('Could not run the optimizer. Is the API running?');
-        this.loading.set(false);
-      },
-    });
+    this.service
+      .optimize()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          this.result.set(result);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.error.set('Could not run the optimizer. Is the API running?');
+          this.loading.set(false);
+        },
+      });
   }
 }
