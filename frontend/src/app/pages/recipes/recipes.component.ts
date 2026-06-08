@@ -60,7 +60,7 @@ export class RecipesComponent implements OnInit {
   protected openDialog(recipe?: Recipe): void {
     const dialogRef = this.dialog.open<RecipeDialogComponent, RecipeDialogData, RecipeRequest>(
       RecipeDialogComponent,
-      { data: { recipe, ingredientNames: this.ingredientNames() } },
+      { data: { recipe, ingredientNames: this.ingredientNames() }, width: '600px', maxWidth: '92vw' },
     );
 
     dialogRef.afterClosed().subscribe((request) => {

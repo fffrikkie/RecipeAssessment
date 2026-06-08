@@ -7,11 +7,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import {
-  MAT_DIALOG_DATA,
-  MatDialogModule,
-  MatDialogRef,
-} from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -19,6 +15,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Recipe, RecipeRequest } from '../../../models/recipe.model';
+import { FormDialogComponent } from '../../../shared/form-dialog/form-dialog.component';
 
 export interface RecipeDialogData {
   recipe?: Recipe;
@@ -34,13 +31,13 @@ type LineGroup = FormGroup<{
   selector: 'app-recipe-dialog',
   imports: [
     ReactiveFormsModule,
-    MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
     MatIconModule,
     MatAutocompleteModule,
     MatTooltipModule,
+    FormDialogComponent,
   ],
   templateUrl: './recipe-dialog.component.html',
   styleUrl: './recipe-dialog.component.scss',

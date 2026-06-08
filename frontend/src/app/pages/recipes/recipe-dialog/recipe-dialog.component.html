@@ -1,7 +1,8 @@
-<h2 mat-dialog-title>{{ isEditing ? 'Edit recipe' : 'Add recipe' }}</h2>
-
 <form [formGroup]="form" (ngSubmit)="save()">
-  <mat-dialog-content>
+  <app-form-dialog
+    [title]="isEditing ? 'Edit recipe' : 'Add recipe'"
+    [submitLabel]="isEditing ? 'Save changes' : 'Add'"
+  >
     <div class="top-fields">
       <mat-form-field appearance="outline" class="top-fields__name">
         <mat-label>Name</mat-label>
@@ -61,12 +62,5 @@
       <mat-icon>add</mat-icon>
       Add ingredient
     </button>
-  </mat-dialog-content>
-
-  <mat-dialog-actions align="end">
-    <button mat-button type="button" mat-dialog-close>Cancel</button>
-    <button mat-flat-button color="primary" type="submit">
-      {{ isEditing ? 'Save changes' : 'Add' }}
-    </button>
-  </mat-dialog-actions>
+  </app-form-dialog>
 </form>

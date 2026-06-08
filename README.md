@@ -118,6 +118,7 @@ frontend/
     models/                              TypeScript interfaces
     services/                            typed HttpClient wrappers
     shared/data-table/                   reusable, config-driven Material table component
+    shared/form-dialog/                  reusable Material dialog chrome (title + content + actions)
     pages/                               optimizer, recipes, ingredients (standalone components)
       */*-dialog/                        MatDialog add/edit forms for recipes & ingredients
     app.routes.ts / app.config.ts        lazy routes + providers
@@ -140,8 +141,13 @@ frontend/
   the new `@if` / `@for` control-flow syntax.
 - **Angular Material** – the UI is built with Material components (toolbar, cards, buttons,
   inputs, autocomplete, table). Add/Edit for both recipes and ingredients open in a `MatDialog`
-  popup. A single generic, reusable `DataTableComponent` (driven by a column definition + row
-  actions) renders every table in the app, so no `mat-table` boilerplate is duplicated.
+  popup.
+- **Reusable building blocks** – two shared components remove duplication:
+  - `DataTableComponent` – generic, config-driven (column definitions + row actions) renders
+    every table in the app, so no `mat-table` boilerplate is repeated.
+  - `FormDialogComponent` – the common dialog chrome (title, scrollable content, Cancel/Submit
+    actions). Each specific dialog supplies only its `[formGroup]` and fields and projects them
+    in; the shared shell wraps them, so no dialog markup is repeated either.
 
 > **Storage is in-memory** — data resets when the API process restarts (by design for this
 > assessment; the repository abstraction keeps it swappable). Authentication/authorization is

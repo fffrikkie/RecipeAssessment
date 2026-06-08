@@ -51,7 +51,7 @@ export class IngredientsComponent implements OnInit {
       IngredientDialogComponent,
       IngredientDialogData,
       IngredientRequest
-    >(IngredientDialogComponent, { data: { ingredient } });
+    >(IngredientDialogComponent, { data: { ingredient }, width: '420px', maxWidth: '90vw' });
 
     dialogRef.afterClosed().subscribe((request) => {
       if (!request) {
