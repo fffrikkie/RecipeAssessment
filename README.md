@@ -61,8 +61,8 @@ Open **http://localhost:4200**. The dev server origin is whitelisted in the API'
 - **Optimizer** – runs the calculation and shows total people fed, which recipes to make
   (and how many times), and how much of each ingredient is used / left over.
 - **Recipes** – add, edit, delete recipes. *Add* and *Edit* open a **Material dialog** with a
-  name, a "feeds" count and a dynamic list of ingredient lines (`quantity` × `ingredient name`,
-  with autocomplete suggestions from the pantry).
+  name, a "feeds" count and a dynamic list of ingredient lines (`quantity` × an ingredient
+  chosen from a dropdown of pantry ingredients).
 - **Ingredients** – add, edit, delete pantry ingredients and their available amounts. *Add* and
   *Edit* open a **Material dialog**.
 
@@ -81,7 +81,7 @@ total people fed without exceeding the stock of any ingredient.
 it exactly with a **depth-first branch-and-bound search**:
 
 1. Ingredients are indexed by name (case-insensitive). A recipe that needs an ingredient not
-   in the pantry simply cannot be made (e.g. the Burger needs *Meat*, which isn't in stock).
+   in the pantry (or more of one than is in stock) simply cannot be made.
 2. Recipes are visited in descending **feeds** order so strong solutions are found early.
 3. At each step an **optimistic upper bound** (each remaining recipe made as often as its own
    ingredients allow, ignoring contention) prunes branches that cannot beat the best plan found.
@@ -89,9 +89,56 @@ it exactly with a **depth-first branch-and-bound search**:
 For the small inputs this problem implies, it returns a provably optimal plan effectively
 instantly.
 
-**Worked example (the seeded data):** with `2× Cucumber, 2× Olives, 3× Lettuce, 6× Tomato,
-8× Cheese, 10× Dough`, the optimal plan feeds **10 people** — 2× Pizza, 4× Cheese Toastie,
-2× Greek Salad — fully using the cheese, dough and tomato.
+### Worked example (the seeded data)
+
+The app seeds the following on first run:
+
+**Available ingredients**
+
+| Ingredient | Available |
+| --- | ---: |
+| Cucumber | 2 |
+| Olives | 2 |
+| Lettuce | 3 |
+| Meat | 3 |
+| Tomato | 6 |
+| Cheese | 8 |
+| Dough | 10 |
+
+**Recipes**
+
+| Recipe | Feeds | Ingredients |
+| --- | ---: | --- |
+| Burger | 1 | 1× Meat, 1× Lettuce, 1× Tomato, 1× Cheese, 1× Dough |
+| Pie | 1 | 2× Dough, 2× Meat |
+| Sandwich | 1 | 1× Dough, 1× Cucumber |
+| Pasta | 2 | 2× Dough, 1× Tomato, 2× Cheese, 1× Meat |
+| Salad | 3 | 2× Lettuce, 2× Tomato, 1× Cucumber, 2× Cheese, 1× Olives |
+| Pizza | 4 | 3× Dough, 2× Tomato, 3× Cheese, 1× Olives |
+
+**Optimal output — feeds 12 people:**
+
+| Recipe | Times made | People fed |
+| --- | ---: | ---: |
+| Pizza | 2 | 8 |
+| Pasta | 1 | 2 |
+| Sandwich | 2 | 2 |
+
+**Ingredient usage**
+
+| Ingredient | Available | Used | Remaining |
+| --- | ---: | ---: | ---: |
+| Cheese | 8 | 8 | 0 |
+| Cucumber | 2 | 2 | 0 |
+| Dough | 10 | 10 | 0 |
+| Lettuce | 3 | 0 | 3 |
+| Meat | 3 | 1 | 2 |
+| Olives | 2 | 2 | 0 |
+| Tomato | 6 | 5 | 1 |
+
+The plan fully consumes cheese, dough, cucumber and olives. Note that Burger, Pie and Salad are
+all individually makeable, but the optimiser leaves them out because the chosen mix feeds more
+people overall — exactly the trade-off a naive greedy pick would miss.
 
 ---
 
@@ -140,14 +187,16 @@ frontend/
   **reactive forms** (with a `FormArray` for recipe ingredient lines), lazy-loaded routes, and
   the new `@if` / `@for` control-flow syntax.
 - **Angular Material** – the UI is built with Material components (toolbar, cards, buttons,
-  inputs, autocomplete, table). Add/Edit for both recipes and ingredients open in a `MatDialog`
-  popup.
-- **Reusable building blocks** – two shared components remove duplication:
+  inputs, selects, table, snackbar toasts). Add/Edit for both recipes and ingredients open in a
+  `MatDialog` popup, and deletes go through a shared confirmation dialog.
+- **Reusable building blocks** – shared pieces remove duplication:
   - `DataTableComponent` – generic, config-driven (column definitions + row actions) renders
     every table in the app, so no `mat-table` boilerplate is repeated.
   - `FormDialogComponent` – the common dialog chrome (title, scrollable content, Cancel/Submit
     actions). Each specific dialog supplies only its `[formGroup]` and fields and projects them
     in; the shared shell wraps them, so no dialog markup is repeated either.
+  - `ConfirmDialogComponent` – a reusable yes/no confirmation dialog used for deletes.
+  - `NotificationService` – a thin wrapper over `MatSnackBar` for consistent success/error toasts.
 
 > **Storage is in-memory** — data resets when the API process restarts (by design for this
 > assessment; the repository abstraction keeps it swappable). Authentication/authorization is

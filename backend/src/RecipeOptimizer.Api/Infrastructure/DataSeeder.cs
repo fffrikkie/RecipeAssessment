@@ -23,6 +23,7 @@ public static class DataSeeder
                      ("Cucumber", 2),
                      ("Olives", 2),
                      ("Lettuce", 3),
+                     ("Meat", 3),
                      ("Tomato", 6),
                      ("Cheese", 8),
                      ("Dough", 10),
@@ -31,8 +32,6 @@ public static class DataSeeder
             ingredients.Add(new Ingredient { Name = name, AvailableAmount = amount });
         }
 
-        // Burger from the brief (Meat is intentionally absent from stock, so it cannot
-        // be made — a good demonstration of the optimiser handling missing ingredients).
         recipes.Add(new Recipe
         {
             Name = "Burger",
@@ -49,37 +48,63 @@ public static class DataSeeder
 
         recipes.Add(new Recipe
         {
-            Name = "Pizza",
-            Feeds = 2,
-            Ingredients =
-            [
-                new RecipeIngredient { IngredientName = "Dough", Quantity = 1 },
-                new RecipeIngredient { IngredientName = "Tomato", Quantity = 2 },
-                new RecipeIngredient { IngredientName = "Cheese", Quantity = 2 },
-            ],
-        });
-
-        recipes.Add(new Recipe
-        {
-            Name = "Greek Salad",
-            Feeds = 1,
-            Ingredients =
-            [
-                new RecipeIngredient { IngredientName = "Cucumber", Quantity = 1 },
-                new RecipeIngredient { IngredientName = "Olives", Quantity = 1 },
-                new RecipeIngredient { IngredientName = "Tomato", Quantity = 1 },
-                new RecipeIngredient { IngredientName = "Lettuce", Quantity = 1 },
-            ],
-        });
-
-        recipes.Add(new Recipe
-        {
-            Name = "Cheese Toastie",
+            Name = "Pie",
             Feeds = 1,
             Ingredients =
             [
                 new RecipeIngredient { IngredientName = "Dough", Quantity = 2 },
-                new RecipeIngredient { IngredientName = "Cheese", Quantity = 1 },
+                new RecipeIngredient { IngredientName = "Meat", Quantity = 2 },
+            ],
+        });
+
+        recipes.Add(new Recipe
+        {
+            Name = "Sandwich",
+            Feeds = 1,
+            Ingredients =
+            [
+                new RecipeIngredient { IngredientName = "Dough", Quantity = 1 },
+                new RecipeIngredient { IngredientName = "Cucumber", Quantity = 1 },
+            ],
+        });
+
+        recipes.Add(new Recipe
+        {
+            Name = "Pasta",
+            Feeds = 2,
+            Ingredients =
+            [
+                new RecipeIngredient { IngredientName = "Dough", Quantity = 2 },
+                new RecipeIngredient { IngredientName = "Tomato", Quantity = 1 },
+                new RecipeIngredient { IngredientName = "Cheese", Quantity = 2 },
+                new RecipeIngredient { IngredientName = "Meat", Quantity = 1 },
+            ],
+        });
+
+        recipes.Add(new Recipe
+        {
+            Name = "Salad",
+            Feeds = 3,
+            Ingredients =
+            [
+                new RecipeIngredient { IngredientName = "Lettuce", Quantity = 2 },
+                new RecipeIngredient { IngredientName = "Tomato", Quantity = 2 },
+                new RecipeIngredient { IngredientName = "Cucumber", Quantity = 1 },
+                new RecipeIngredient { IngredientName = "Cheese", Quantity = 2 },
+                new RecipeIngredient { IngredientName = "Olives", Quantity = 1 },
+            ],
+        });
+
+        recipes.Add(new Recipe
+        {
+            Name = "Pizza",
+            Feeds = 4,
+            Ingredients =
+            [
+                new RecipeIngredient { IngredientName = "Dough", Quantity = 3 },
+                new RecipeIngredient { IngredientName = "Tomato", Quantity = 2 },
+                new RecipeIngredient { IngredientName = "Cheese", Quantity = 3 },
+                new RecipeIngredient { IngredientName = "Olives", Quantity = 1 },
             ],
         });
     }
