@@ -116,13 +116,14 @@ The app seeds the following on first run:
 | Salad | 3 | 2× Lettuce, 2× Tomato, 1× Cucumber, 2× Cheese, 1× Olives |
 | Pizza | 4 | 3× Dough, 2× Tomato, 3× Cheese, 1× Olives |
 
-**Optimal output — feeds 12 people:**
+**Optimal plan: `2× Pizza + 1× Pasta + 2× Sandwich`, feeding 12 people.**
 
 | Recipe | Times made | People fed |
 | --- | ---: | ---: |
 | Pizza | 2 | 8 |
 | Pasta | 1 | 2 |
 | Sandwich | 2 | 2 |
+| **Total** | | **12** |
 
 **Ingredient usage**
 
